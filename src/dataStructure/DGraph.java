@@ -1,19 +1,14 @@
 package dataStructure;
 
-import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.stream.Collectors;
 
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.google.gson.Gson;
 
-import jdk.nashorn.internal.parser.JSONParser;
 import utils.Point3D;
 
 /**

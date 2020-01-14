@@ -123,9 +123,9 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 		b.setBackground(Color.white);
 		b.clearRect(0, 0, 2000,1000);
 		try {
-			image = ImageIO.read(new File("src//taxi.png"));
-			image2 = ImageIO.read(new File("src//consumer.png"));
-			image3 = ImageIO.read(new File("src//consumer1.png"));//
+			image = ImageIO.read(new File("data//car.png"));
+			image2 = ImageIO.read(new File("data//cons.png"));
+			image3 = ImageIO.read(new File("data//22.png"));//
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
