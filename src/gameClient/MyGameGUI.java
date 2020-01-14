@@ -71,6 +71,7 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 	BufferedImage image2;
 	BufferedImage image3;
 	boolean man;
+	int rest_to_locate;
 
 	BufferedImage bufferedImage;
 	Graphics2D b;
@@ -88,7 +89,14 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}}
-
+		String info = game.toString();
+		JSONObject line;
+		try {
+			line = new JSONObject(info);
+			JSONObject ttt = line.getJSONObject("GameServer");
+			int rs = ttt.getInt("robots");
+		}
+			catch (JSONException e) {e.printStackTrace();}
 		paintgraph(b);
 		repaint();
 	}
@@ -436,34 +444,35 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		if(this.man==false) return;
+		if(this.man==false) return;// do man true only after select level
 		int x = e.getX();
 		int y = e.getY();
 		Point3D p = new Point3D(x,y);
 		//points.add(p);
 		//repaint();
-		System.out.println("mousePressed");
+		if(!this.game.isRunning()&& this.rest_to_locate>0) {
+			boolean b=checkAndLocateRobot(p);
+			if(b) this.rest_to_locate--;	
+		}
+		
 		
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		if(this.man==false) return;
-		System.out.println("mouseReleased");
 		
 	}
 
 	@Override
 	public void mouseEntered(MouseEvent e) {
 		if(this.man==false) return;
-		System.out.println("mouseEntered");
 		
 	}
 
 	@Override
 	public void mouseExited(MouseEvent e) {
 		if(this.man==false) return;
-		System.out.println("mouseExited");
 	}
 
 
