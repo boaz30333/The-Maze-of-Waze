@@ -33,7 +33,7 @@ public class SimpleGameClient {
 	public static void main(String[] a) {
 		test1();}
 	public static void test1() {
-		int scenario_num = 2;
+		int scenario_num = 17;
 		game_service game = Game_Server.getServer(scenario_num); // you have [0,23] games
 		String g = game.getGraph();
 		OOP_DGraph gg = new OOP_DGraph();
@@ -55,6 +55,7 @@ public class SimpleGameClient {
 			}
 		}
 		catch (JSONException e) {e.printStackTrace();}
+		System.out.println(game.getRobots());
 		game.startGame();
 		// should be a Thread!!!
 		while(game.isRunning()) {
@@ -71,7 +72,8 @@ public class SimpleGameClient {
 	 * @param log
 	 */
 	private static void moveRobots(game_service game, oop_graph gg) {
-		List<String> log = game.move();
+	List<String> log = game.move();
+//		System.out.println(log);
 		if(log!=null) {
 			long t = game.timeToEnd();
 			for(int i=0;i<log.size();i++) {
