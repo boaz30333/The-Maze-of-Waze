@@ -17,7 +17,7 @@ public int src;
 public int id;
 public int dest;
 public int speed;
-public ArrayList<node_data> targets;
+public ArrayList<node_data> targets= new ArrayList<node_data>();
 public double finish_time;
 public int finish_node;
 public int finish_speed;

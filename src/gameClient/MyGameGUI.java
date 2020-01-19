@@ -77,7 +77,7 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 	Graphics2D b;
 	private long time;
 	private boolean is_choosen_level;
-
+	MannualGame mangame; 
 
 
 
@@ -86,25 +86,7 @@ public MyGameGUI()
 		this.grph = null;
 		init();
 	}
-//	public MyGameGUI( game_service game)
-//	{
-//		this.game=game;
-//		String g = game.getGraph();
-//		//			System.out.println(g);
-//		this.grph = new DGraph();
-//		if(this.grph instanceof DGraph) {
-//			((DGraph)this.grph).addListener(this);
-//			try {
-//				((DGraph)this.grph).init(g);
-//			} catch (JSONException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}}
-//		init();
-//		paintgraph(b);
-//		//			viewDial.start();
-//
-//	}
+
 	public void init()
 	{
 		bufferedImage = new BufferedImage(2000, 1000, BufferedImage.TYPE_INT_ARGB);
@@ -161,7 +143,7 @@ public MyGameGUI()
 
 	}
 
-	public static void get_scale_of_level(graph grph2) {
+	public  void get_scale_of_level(graph grph2) {
 	// TODO Auto-generated method stub
 		Collection<node_data> b= grph2.getV()	;
 		Iterator<node_data> iter=b.iterator();
@@ -271,8 +253,10 @@ public MyGameGUI()
 			Thread b=  new Thread(paintg);
 			b.start();
 			b.setPriority(Thread.MAX_PRIORITY);
-			new Thread(moveRobots).start();
-			new Thread(clock).start();
+//			new Thread(moveRobots).start();
+//			new Thread(clock).start();
+			if(this.man==false)
+				new Thread(mangame.findnewfruits).start();
 			
 			
 			break;
@@ -322,7 +306,8 @@ private void selectMode(String mode) {
 		else { // starting auto game
 			this.man=false;
 			try {
-				MannualGame b= new MannualGame(this.game,this.grph);
+				 mangame= new MannualGame(this.game,this.grph);
+				 repaint();
 				this.rest_to_locate=0;
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(in11, "there is game running please wait or stop");
@@ -408,7 +393,7 @@ public void paintrobot(Graphics d) {
 	private void printClock() {
 		Graphics2D windows= (Graphics2D) this.b;
 		String sss="";
-		if(time -game.timeToEnd()>=1000) {
+		if(game.isRunning()&&time -game.timeToEnd()>=1000) {
 			System.out.println("time"+time/1000+"  to end :"+game.timeToEnd()/1000);
 			windows.setColor(Color.MAGENTA);				
 windows.fillRect(90, 90,100, 30);
@@ -504,7 +489,6 @@ windows.setColor(Color.green);
 			int p_y=(int) (( p1.y()-miny)*((double)600/(maxy-miny))+50);
 			if (Math.abs(p_x-p.x())<12&& Math.abs(p_y-p.y())<12) {
 				x= node_data.getKey();
-				System.out.println("hgfgh"+this.Robot_to_move+"uyuy"+move_to);
 //				game.chooseNextEdge(this.Robot_to_move, move_to);
 //				is_choosen_robot=false;
 				return x;
@@ -539,17 +523,14 @@ windows.setColor(Color.green);
 
 	}
 	private boolean checkAndLocateRobot(Point3D clicked) {
-		System.out.println(clicked);
 		Collection <node_data> node = grph.getV();
 		for (node_data node_data : node)
 		{
 			Point3D p = node_data.getLocation();
 			int p_x=(int) (( p.x()-minx)*((double)1200/(maxx-minx))+30);
 			int p_y=(int) (( p.y()-miny)*((double)600/(maxy-miny))+50);
-			System.out.println(""+p_x+" "+p_y);
 			if (Math.abs(p_x-clicked.x())<12&& Math.abs(p_y-clicked.y())<12) {
 				boolean b=	this.game.addRobot(node_data.getKey());
-				System.out.println(b);
 				repaint();
 				return true;
 			}
@@ -570,36 +551,39 @@ windows.setColor(Color.green);
 	public void mouseExited(MouseEvent e) {
 		if(this.man==false) return;
 	}
-	Runnable clock = new Runnable(){ 
+//	Runnable clock = new Runnable(){ 
+//
+//		public void run() { 
+//			while(game.isRunning()){
+//				try {
+//					Thread.sleep(5);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//				printClock();
+//			}
+//
+//		}
+//	};
+	Runnable moveRobots = new Runnable(){  
 
-		public void run() { 
-			while(game.isRunning()){
-				try {
-					Thread.sleep(5);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				printClock();
-			}
-
-		}
-	};
-	Runnable moveRobots = new Runnable(){ 
-
-		public void run() { 
-			while(game.isRunning()){
+		public void run() {  
+			String results = null;
+			while(game!=null&&game.isRunning()){
 				{
 					try {
-						Thread.sleep(10);
+						Thread.sleep(5);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}	
+						if(game.isRunning())
 						game.move();
+					results = game.toString();
 				}
+				
 			}
-			String results = game.toString();
 			System.out.println("Game Over: "+results);
 			is_choosen_level=false;
 			game.stopGame();
@@ -610,16 +594,21 @@ Runnable paintg = new Runnable() {
 	
 	@Override
 	public void run() { 
-		while(game.isRunning()){
-
+		while(game!=null&&game.isRunning()){
+if(man==false) game.move();
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			if(game!=null&&game.isRunning())
 			repaint();
+			printClock();
 		}
+		System.out.println("Game Over: "+game.toString());
+		is_choosen_level=false;
+		game.stopGame();
 
 	}
 };
