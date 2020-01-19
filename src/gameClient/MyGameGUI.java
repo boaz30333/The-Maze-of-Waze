@@ -77,16 +77,20 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 	Graphics2D b;
 	private long time;
 	private boolean is_choosen_level;
-	MannualGame mangame; 
+	AutoGame auto; 
 
 
-
-public MyGameGUI()
+	/**
+	 * this constructor build the first gui windows
+	 */
+	public MyGameGUI()
 	{
 		this.grph = null;
 		init();
 	}
-
+/**
+ * this method create the basic windows of this gui graphic
+ */
 	public void init()
 	{
 		bufferedImage = new BufferedImage(2000, 1000, BufferedImage.TYPE_INT_ARGB);
@@ -142,9 +146,13 @@ public MyGameGUI()
 		}
 
 	}
-
+/**
+ * 
+ * @param grph2 the graph that this windows should paint
+ * set the scale of the points
+ */
 	public  void get_scale_of_level(graph grph2) {
-	// TODO Auto-generated method stub
+		// TODO Auto-generated method stub
 		Collection<node_data> b= grph2.getV()	;
 		Iterator<node_data> iter=b.iterator();
 
@@ -156,9 +164,12 @@ public MyGameGUI()
 			maxx= Math.max(maxx, of_c.x());
 			maxy= Math.max(maxy, of_c.y());
 		}
-}
+	}
 	@Override
-	public void actionPerformed(ActionEvent Command)
+/**
+ * this method listen to the menu  	
+ */
+public void actionPerformed(ActionEvent Command)
 	{
 		String str = Command.getActionCommand();		
 		switch(str) 
@@ -203,10 +214,10 @@ public MyGameGUI()
 				String level = JOptionPane.showInputDialog(in,"enter level 0-23 ");
 				int numlevel=-1;
 				try {
-				 numlevel =Integer.parseInt(level);
+					numlevel =Integer.parseInt(level);
 				}
 				catch(Exception e) {
-					
+
 				}
 				if(numlevel>23|| numlevel<0) {
 					JOptionPane.showMessageDialog(in1, "please choose level 0-23! , you entered:+"+numlevel);
@@ -253,12 +264,11 @@ public MyGameGUI()
 			Thread b=  new Thread(paintg);
 			b.start();
 			b.setPriority(Thread.MAX_PRIORITY);
-//			new Thread(moveRobots).start();
-//			new Thread(clock).start();
+
 			if(this.man==false)
-				new Thread(mangame.findnewfruits).start();
-			
-			
+				new Thread(auto.play).start();
+
+
 			break;
 		case "stop game":
 			this.game.stopGame();
@@ -267,6 +277,11 @@ public MyGameGUI()
 
 		}
 	}
+	/**
+	 * 
+	 * @param numlevel the level of the game between 0-23 
+	 * we need to ask this graph from the server and than called to other func to paint it
+	 */
 	public void chooselevel(int numlevel) {
 		this.game= Game_Server.getServer(numlevel);
 		String g = game.getGraph();
@@ -291,35 +306,47 @@ public MyGameGUI()
 		paintgraph(b);
 		repaint();
 	}
-private void selectMode(String mode) {
+	/**
+	 * 
+	 * @param mode auto/mannual 
+	 * if you choose mannual you need to place the robot by the mouse 
+	 * otherwise the auto system do it for you
+	 */
+	private void selectMode(String mode) {
 		JFrame in11=new JFrame();
-	// TODO Auto-generated method stub
-	if(!is_choosen_level) {
-		JOptionPane.showMessageDialog(in11, "please choose level first");
-		return;
-	}
+		// TODO Auto-generated method stub
+		if(!is_choosen_level) {
+			JOptionPane.showMessageDialog(in11, "please choose level first");
+			return;
+		}
 		JFrame in = new JFrame();
 		if(mode=="Manual") {
 			this.man=true;
 			JOptionPane.showMessageDialog(in, "please locate "+this.rest_to_locate+" robots at vertex");
 		}
+
 		else { // starting auto game
 			this.man=false;
 			try {
-				 mangame= new MannualGame(this.game,this.grph);
-				 repaint();
+				auto= new AutoGame(this.game,this.grph);
+				repaint();
 				this.rest_to_locate=0;
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(in11, "there is game running please wait or stop");
 				e.printStackTrace();
 			}
-// need to locate robots
+			// need to locate robots
 			JOptionPane.showMessageDialog(in, "you can start game");
 
 		}
 
 	}
-public void  paintgraph(Graphics b) {
+	/**
+	 * 
+	 * @param b the graphics we paint on it
+	 * this method paint the graph
+	 */
+	public void  paintgraph(Graphics b) {
 		b.clearRect(0, 0, 2000, 1000);
 		if(this.grph != null)
 		{
@@ -356,56 +383,69 @@ public void  paintgraph(Graphics b) {
 		}
 
 	}
-public void  paint(Graphics d)
-{
-	Graphics2D windows = (Graphics2D) d;
-	windows.drawImage(bufferedImage, null, 0, 0); 
-	if(game!=null) {
-		paintfruits(d);
-		paintrobot(d);
-	}
-}
-public void paintrobot(Graphics d) {
-	Graphics2D windows = (Graphics2D) d;
-	Point3D po=null;
-	JSONObject line;
-	Iterator<String> r_iter = game.getRobots().iterator();
-	while(r_iter.hasNext()) {
-		try {
-			line = new JSONObject(r_iter.next());
-			JSONObject ttt = line.getJSONObject("Robot");
-			String rs = ttt.getString("pos");
-			po = new Point3D(rs);
-			// the list of fruits should be considered in your solutio
+	/**
+	 * this method get the paint of the graph and paint on it the fruits and the robots of this level
+	 */
+	public void  paint(Graphics d)
+	{
+		Graphics2D windows = (Graphics2D) d;
+		windows.drawImage(bufferedImage, null, 0, 0); 
+		if(game!=null) {
+			paintfruits(d);
+			paintrobot(d);
 		}
-		catch (JSONException e) {e.printStackTrace();}
-		// TODO Auto-generated method stub
-		int p_x=(int) (( po.x()-minx)*((double)1200/(maxx-minx))+30);
-		int p_y=(int) (( po.y()-miny)*((double)600/(maxy-miny))+50);
-		windows.drawImage(image,
-				p_x-image.getWidth()/2, 
-				p_y-image.getHeight()/2, 
-				null);
 	}
-}
+	/**
+	 * 
+	 * paint the robots of this level 
+	 */
+	public void paintrobot(Graphics d) {
+		Graphics2D windows = (Graphics2D) d;
+		Point3D po=null;
+		JSONObject line;
+		Iterator<String> r_iter = game.getRobots().iterator();
+		while(r_iter.hasNext()) {
+			try {
+				line = new JSONObject(r_iter.next());
+				JSONObject ttt = line.getJSONObject("Robot");
+				String rs = ttt.getString("pos");
+				po = new Point3D(rs);
+				// the list of fruits should be considered in your solutio
+			}
+			catch (JSONException e) {e.printStackTrace();}
+			// TODO Auto-generated method stub
+			int p_x=(int) (( po.x()-minx)*((double)1200/(maxx-minx))+30);
+			int p_y=(int) (( po.y()-miny)*((double)600/(maxy-miny))+50);
+			windows.drawImage(image,
+					p_x-image.getWidth()/2, 
+					p_y-image.getHeight()/2, 
+					null);
+		}
+	}
 
-
+/**
+ * paint the clock of this level 
+ */
 	private void printClock() {
 		Graphics2D windows= (Graphics2D) this.b;
 		String sss="";
 		if(game.isRunning()&&time -game.timeToEnd()>=1000) {
 			System.out.println("time"+time/1000+"  to end :"+game.timeToEnd()/1000);
 			windows.setColor(Color.MAGENTA);				
-windows.fillRect(90, 90,100, 30);
-windows.setStroke(new BasicStroke(20,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
-windows.setColor(Color.green);
-		 sss = ""+game.timeToEnd()/1000+ " sec to end";
-		time=game.timeToEnd();
+			windows.fillRect(90, 90,100, 30);
+			windows.setStroke(new BasicStroke(20,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
+			windows.setColor(Color.green);
+			sss = ""+game.timeToEnd()/1000+ " sec to end";
+			time=game.timeToEnd();
 		}
 		windows.drawString(sss,100,100);
-	
-}
-	private void paintfruits(Graphics d) {
+
+	}
+/**
+ * 
+ * this method paint the fruits of this level
+ */
+private void paintfruits(Graphics d) {
 		// TODO Auto-generated method stub
 		Graphics2D windows = (Graphics2D) d;
 		Point3D po=null;
@@ -439,7 +479,11 @@ windows.setColor(Color.green);
 			}
 		}
 	}
+
 	@Override
+	/**
+	 * this method using only on mannual mode for place robots and move to neighber vertex
+	 */
 	public void mouseClicked(MouseEvent e) {
 		if(this.man==false) return;
 		System.out.println("mouseClicked"+ this.rest_to_locate);
@@ -451,7 +495,7 @@ windows.setColor(Color.green);
 		if(!this.game.isRunning()&& this.rest_to_locate>0) {
 			boolean b=checkAndLocateRobot(p);
 			if(b) this.rest_to_locate--;
-			
+
 		}
 		if(!this.game.isRunning()&& this.rest_to_locate==0) {
 			JFrame in11 =new JFrame();
@@ -477,7 +521,11 @@ windows.setColor(Color.green);
 
 
 	}
-
+/**
+ * 
+ * @param p get point of the mouse click 
+ * @return the key of the vertex that clicked
+ */
 	private int find_node_move_to(Point3D p) {
 		// TODO Auto-generated method stub
 		Collection <node_data> node = grph.getV();
@@ -489,13 +537,18 @@ windows.setColor(Color.green);
 			int p_y=(int) (( p1.y()-miny)*((double)600/(maxy-miny))+50);
 			if (Math.abs(p_x-p.x())<12&& Math.abs(p_y-p.y())<12) {
 				x= node_data.getKey();
-//				game.chooseNextEdge(this.Robot_to_move, move_to);
-//				is_choosen_robot=false;
+				//				game.chooseNextEdge(this.Robot_to_move, move_to);
+				//				is_choosen_robot=false;
 				return x;
 			}
 		}
 		return x;
 	}
+	/**
+	 * 
+	 * @param p get point of the mouse click 
+	 * @return the id of robots that clicked
+	 */
 	private int find_robot_is_choosen(Point3D p) {
 		// TODO Auto-generated method stub
 		Iterator<String> f_iter = game.getRobots().iterator();
@@ -522,7 +575,12 @@ windows.setColor(Color.green);
 		if(this.man==false) return;// do man true only after select level
 
 	}
-	private boolean checkAndLocateRobot(Point3D clicked) {
+	/**
+	 * 
+	 * @param clicked get point of the mouse click 
+	 * @return true if sucsses to locate robot. false if not
+	 */
+private boolean checkAndLocateRobot(Point3D clicked) {
 		Collection <node_data> node = grph.getV();
 		for (node_data node_data : node)
 		{
@@ -551,22 +609,10 @@ windows.setColor(Color.green);
 	public void mouseExited(MouseEvent e) {
 		if(this.man==false) return;
 	}
-//	Runnable clock = new Runnable(){ 
-//
-//		public void run() { 
-//			while(game.isRunning()){
-//				try {
-//					Thread.sleep(5);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//				printClock();
-//			}
-//
-//		}
-//	};
-	Runnable moveRobots = new Runnable(){  
+/**
+ * this Thread called only in mannual mode and called to move robot on the server
+ */
+	Runnable moveRobots = new Runnable(){   
 
 		public void run() {  
 			String results = null;
@@ -578,11 +624,11 @@ windows.setColor(Color.green);
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}	
-						if(game.isRunning())
+					if(game.isRunning())
 						game.move();
 					results = game.toString();
 				}
-				
+
 			}
 			System.out.println("Game Over: "+results);
 			is_choosen_level=false;
@@ -590,46 +636,52 @@ windows.setColor(Color.green);
 
 		}
 	};
-Runnable paintg = new Runnable() {
-	
-	@Override
-	public void run() { 
-		while(game!=null&&game.isRunning()){
-if(man==false) game.move();
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			if(game!=null&&game.isRunning())
-			repaint();
-			printClock();
-		}
-		System.out.println("Game Over: "+game.toString());
-		is_choosen_level=false;
-		game.stopGame();
+	/**
+	 * this thread called again and again to paint the screen after changes
+	 */
+	Runnable paintg = new Runnable() {
 
+		@Override
+		public void run() { 
+			while(game!=null&&game.isRunning()){
+				if(man==false) game.move();
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if(game!=null&&game.isRunning())
+					repaint();
+				printClock();
+			}
+			System.out.println("Game Over: "+game.toString());
+			is_choosen_level=false;
+			game.stopGame();
+
+		}
+	};
+	@Override
+	/**
+	 * if the grph change this method called to paint graph again
+	 */
+	public void graphUpdated() {
+		if(b!=null)
+			paintgraph(b);
 	}
-};
-@Override
-public void graphUpdated() {
-	if(b!=null)
-		paintgraph(b);
-}
-@Override
-public void graphUpdated(double x, double y) {
-	// TODO Auto-generated method stub
-	minx= Math.min(minx, x);
-	miny= Math.min(miny,y);
-	maxx= Math.max(maxx, x);
-	maxy= Math.max(maxy, y);
-	if(b!=null)
-		paintgraph(b);
-}
-public graph getGraph() {
-	return this.grph;
-}
+	@Override
+	public void graphUpdated(double x, double y) {
+		// TODO Auto-generated method stub
+		minx= Math.min(minx, x);
+		miny= Math.min(miny,y);
+		maxx= Math.max(maxx, x);
+		maxy= Math.max(maxy, y);
+		if(b!=null)
+			paintgraph(b);
+	}
+	public graph getGraph() {
+		return this.grph;
+	}
 
 }
 

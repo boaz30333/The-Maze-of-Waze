@@ -9,5 +9,7 @@
 	<classpathentry kind="lib" path="lib/java-json.jar"/>
 	<classpathentry kind="lib" path="lib/GameServer_v0.27.jar"/>
 	<classpathentry kind="lib" path="C:/Users/User/eclipse-workspace/myMath/Matala1/src/Ex1/gson-2.8.6.jar"/>
+	<classpathentry kind="lib" path="lib/JavaAPIforKml-sources.jar"/>
+	<classpathentry kind="lib" path="lib/JavaAPIforKml.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
