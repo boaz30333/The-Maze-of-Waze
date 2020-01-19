@@ -34,12 +34,12 @@ public class AutoGame {
 	HashMap<Integer,Robot> robots= new HashMap<>();
 	int num_of_robots;	
 	Graph_Algo algo;
-/**
- * 
- * @param game2 
- * @param grph
- * @throws Exception
- */
+	/**
+	 * 
+	 * @param game2 
+	 * @param grph
+	 * @throws Exception
+	 */
 	public AutoGame(game_service game2,graph grph) throws Exception{
 		if(this.game==null||this.game.isRunning()==false) {
 			this.game=game2;
@@ -62,7 +62,10 @@ public class AutoGame {
 
 		}
 	}
-
+	/**
+	 * this method sets new dest to robot when its dest turn to -1 
+	 * remove the first target from his list
+	 */
 	private void SetDestRobots() {
 		// TODO Auto-generated method stub
 		List<String> log = null;
@@ -268,6 +271,9 @@ public class AutoGame {
 		//		game.chooseNextEdge(id_maker++,a.on_edge.getDest() );
 	}
 
+	/**
+	 * this thread using for auto play set dest to robots , find new fruits and add a mission for the first free robot
+	 */
 	Runnable play = new Runnable() {
 
 		@Override
