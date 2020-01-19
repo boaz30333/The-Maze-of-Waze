@@ -34,7 +34,12 @@ public class AutoGame {
 	HashMap<Integer,Robot> robots= new HashMap<>();
 	int num_of_robots;	
 	Graph_Algo algo;
-
+/**
+ * 
+ * @param game2 
+ * @param grph
+ * @throws Exception
+ */
 	public AutoGame(game_service game2,graph grph) throws Exception{
 		if(this.game==null||this.game.isRunning()==false) {
 			this.game=game2;
