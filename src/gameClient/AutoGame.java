@@ -96,7 +96,7 @@ public class AutoGame {
 							}
 						}
 
-						this.robots.get(rid).finish_time=this.robots.get(rid).finish_time-this.grph.getEdge(this.robots.get(rid).src, this.robots.get(rid).dest).getWeight();
+//						this.robots.get(rid).finish_time=this.robots.get(rid).finish_time-this.grph.getEdge(this.robots.get(rid).src, this.robots.get(rid).dest).getWeight();
 						this.robots.get(rid).src=dest;
 					}
 				} 
@@ -124,11 +124,11 @@ public class AutoGame {
 			a=r_iter.next();
 			finish_time= a.finish_time;
 			int src= a.finish_node;
-			time=algo.shortestPathDist(src, b.on_edge.getDest())+finish_time;
+			time=algo.shortestPathDist(src, b.on_edge.getDest());//+finish_time
 			if(time<min_time) {
 				robot_id=a.id;
 				min_time=time;
-				System.out.println(game.timeToEnd()+" "+robot_id+time);
+				System.out.println(game.timeToEnd()+" "+robot_id+" "+time);
 			}
 		}
 		if(robot_id!=-1) {
@@ -213,7 +213,7 @@ public class AutoGame {
 								&&e.getDest()>e.getSrc()
 								&&Math.abs(grph.getNode(e.getDest()).getLocation().distance2D(grph.getNode(e.getSrc()).getLocation())
 										- grph.getNode(e.getDest()).getLocation().distance2D(b.pos)-
-										b.pos.distance2D(grph.getNode(e.getSrc()).getLocation()))<0.001) {
+										b.pos.distance2D(grph.getNode(e.getSrc()).getLocation()))<0.00001) {
 							b.on_edge=e;
 						}
 					}
@@ -279,15 +279,25 @@ public class AutoGame {
 		@Override
 		public void run() { 
 			synchronized(game) {
+
 				List<String> log=game.move();
 				while(log!=null){
-					log=game.move();
+
+
+
 					SetDestRobots();
+	
 					Iterator<String> f_iter = game.getFruits().iterator();
 					Point3D po=null;
 					JSONObject line;
 					int type=0;
 					double value=0;
+					try {
+						Thread.sleep(120);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 					while(f_iter.hasNext()) {
 						try {
 							String fruit=f_iter.next().toString();
@@ -311,28 +321,45 @@ public class AutoGame {
 								Iterator<Fruit> r_iter = f.iterator();
 								Fruit a = null;
 								boolean need_to_take=true;
-								while(r_iter.hasNext()) {       // check if there is another fruit on this way
+								while(r_iter.hasNext()) {      // check if there is another fruit on this way
 									a=r_iter.next();
-									if(a.on_edge.equals(b.on_edge)) {
+									if(a.on_edge.equals(b.on_edge)) {// need to put out from fruit coolection fruits that eaten
 										need_to_take=false;
 										break;
 									}
 								}
-								if(need_to_take)
-									fruits.put(po, b);
+								if(need_to_take) { // for the event that create new fruit on the edge that robot already there
+									log=game.getRobots();
+									for(int i=0;i<log.size();i++) {
+										String robot_json = log.get(i);
+										try {
+											JSONObject line1 = new JSONObject(robot_json);
+											JSONObject ttt1 = line1.getJSONObject("Robot");
+											int dest = ttt1.getInt("dest");
+											int src = ttt1.getInt("src");
+											if(b.on_edge.getSrc()==src&&b.on_edge.getDest()==dest)
+												need_to_take=false;
+										} 
+										catch (JSONException e) {e.printStackTrace();}
+						}
+								}
+								if(need_to_take)	fruits.put(po, b);
 							}
 							// the list of fruits should be considered in your solutio
 						}
 						catch (JSONException e) {e.printStackTrace();}}
 					Fruit b = findMaxFreeFruit();
-					if(b.staffed==false) {
+					if(b.staffed==false){
 						findRobotAndAddMission(b);
 						b.staffed=true;
 					}
-
+					log=game.move();
 				}
 
 			}}
 	};
 
 }
+
+
+

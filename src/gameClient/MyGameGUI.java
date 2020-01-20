@@ -265,8 +265,6 @@ public void actionPerformed(ActionEvent Command)
 			b.start();
 			b.setPriority(Thread.MAX_PRIORITY);
 
-			if(this.man==false)
-				new Thread(auto.play).start();
 
 
 			break;
@@ -619,7 +617,7 @@ private boolean checkAndLocateRobot(Point3D clicked) {
 			while(game!=null&&game.isRunning()){
 				{
 					try {
-						Thread.sleep(5);
+						Thread.sleep(100);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -643,21 +641,23 @@ private boolean checkAndLocateRobot(Point3D clicked) {
 
 		@Override
 		public void run() { 
-			while(game!=null&&game.isRunning()){
-				if(man==false) game.move();
+
+			if(man==false)
+				new Thread(auto.play).start();
+			while(game!=null){
+				if(man==true) game.move();
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				if(game!=null&&game.isRunning())
 					repaint();
 				printClock();
+				if(!game.isRunning()) break;
 			}
 			System.out.println("Game Over: "+game.toString());
 			is_choosen_level=false;
-			game.stopGame();
 
 		}
 	};
