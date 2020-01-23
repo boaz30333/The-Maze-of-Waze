@@ -231,7 +231,7 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 				JFrame in11 = new JFrame();
 				String level1;
 				if(login==false) {
-				final String[] modes = { "0","1","3","5","9","11","13","16","19","20","23"};
+				final String[] modes ={ "0","1", "2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23"}; 
 				
 				 level1 = (String) JOptionPane.showInputDialog(frame, 
 						"select level",
@@ -242,7 +242,7 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 						modes[0]);
 				}
 				else {
-				final String[] modes = { "0","1", "2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23"};
+				final String[] modes = { "0","1","3","5","9","11","13","16","19","20","23"};
 				
 				level1 = (String) JOptionPane.showInputDialog(frame, 
 						"select level",
