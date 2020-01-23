@@ -4,7 +4,6 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.io.FileNotFoundException;
-import java.sql.Savepoint;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,9 +11,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,10 +25,9 @@ import dataStructure.graph;
 import dataStructure.node_data;
 import utils.Point3D;
 
-public class AutoGame {
+public class AutoGame2 {
 
-	int id =0;
-	static int id_maker=0;
+	public static int id_maker=0;
 	protected game_service game;
 	int Robot_to_move=-1;
 	protected graph grph;
@@ -42,14 +37,13 @@ public class AutoGame {
 	Graph_Algo algo;
 	private KML_Logger k;
 	private int countForKml;
-
 	/**
 	 * 
 	 * @param game2 
 	 * @param grph
 	 * @throws Exception
 	 */
-	public AutoGame(game_service game2,graph grph) throws Exception{
+	public AutoGame2(game_service game2,graph grph) throws Exception{
 		if(this.game==null||this.game.isRunning()==false) {
 			this.game=game2;
 			this.grph=grph;
@@ -77,10 +71,17 @@ public class AutoGame {
 	 */
 	private void SetDestRobots() {
 		// TODO Auto-generated method stub
-
-		List<String> log = game.getRobots();
+		List<String> log = null;
+		if(game!=null)
+			log = game.getRobots();
+		for(int i=0; i<log.size();i++) {
+		Fruit b = findMaxFreeFruit();
+		if(b.staffed==false){
+			findRobotAndAddMission(b);
+			b.staffed=true;
+		}
+	}
 		if(log!=null) {
-			long time_to_move= (long) Double.MAX_VALUE;
 			for(int i=0;i<log.size();i++) {
 				String robot_json = log.get(i);
 				try {
@@ -90,88 +91,75 @@ public class AutoGame {
 					int dest = ttt.getInt("dest");
 					int src = ttt.getInt("src");
 					Point3D pos= new Point3D(ttt.getString("pos"));
-					if(countForKml==0) { // save position of robot once for every five move call
+					if(countForKml==0) {// save position of robot once for every five move call
 						k.saveRobot(pos, rid);
 						}
 						else if(countForKml++==5){
 							countForKml=0;
 							
 						}
-					if(dest==-1) {
+					if(dest==-1&&!this.robots.get(rid).targets.isEmpty()) {
+
+						dest= this.robots.get(rid).targets.remove(0).getKey();
+						game.chooseNextEdge(rid, dest);
+						this.robots.get(rid).dest=dest;	
 						Collection<Fruit> f= fruits.values();
 						Iterator<Fruit> r_iter = f.iterator();
 						Fruit a = null;
-						 double time=Double.MAX_VALUE;
-						 Fruit nearest=null;
-						 double time2=Double.MAX_VALUE;
-						while(r_iter.hasNext()) {      
+						while(r_iter.hasNext()) {       // check if there is another fruit on this way
 							a=r_iter.next();
-							if(a.on_edge.getSrc()==-1) continue;
-							time=algo.shortestPathDist(src, a.on_edge.getSrc());
-							if(time<time2) {
-								time2=time;
-								nearest=a;
-							}  
-						}
-//						System.out.println(time);
-						List<node_data> routh ;
-						
-						if(time2==0||time==Integer.MIN_VALUE) {
-							dest=nearest.on_edge.getDest();
-//							double length_edge= this.grph.getNode(nearest.on_edge.getSrc()).getLocation().distance2D(this.grph.getNode(nearest.on_edge.getDest()).getLocation());
-//							double time_to_fruit= (this.grph.getNode(nearest.on_edge.getSrc()).getLocation().distance2D(nearest.pos)/length_edge)*nearest.on_edge.getWeight()*1000;
-//							if(time_to_fruit<time_to_move)
-//								time_to_move=(long) time_to_fruit;
-						}
-						else {
-							routh = algo.shortestPath(src, nearest.on_edge.getSrc());
-							dest= routh.get(1).getKey();
-//							double time_to_edge=Double.MAX_VALUE;
-//
-//							Collection<edge_data> edges = grph.getE(src);
-//									for (edge_data e : edges)
-//									{	
-//									if(e.getSrc()==src&&e.getDest()==dest) {
-//										if(e.getWeight()<time_to_move)
-//											time_to_move=(long) e.getWeight()*1000;
-//									}
-//									}
-						}
-						game.chooseNextEdge(rid,dest);
-//							System.out.println("robot :"+rid+" move from:"+src+" to :"+dest);
-						
-						Iterator<Fruit> r_iter1 = f.iterator();
-						 a = null;
-						while(r_iter1.hasNext()) {       // check if there is another fruit on this way
-							a=r_iter1.next();
-							if(a.on_edge.getSrc()==src&&a.on_edge.getDest()==dest) {
+							if(a.on_edge.getSrc()==this.robots.get(rid).src&&a.on_edge.getDest()==this.robots.get(rid).dest) {
 								a.on_edge=new edge(-1, -1, 0);//instead to delete
 							}
 						}
-//						System.out.println("robot :"+rid+"decrease finish :"+this.robots.get(rid).src+" -  :"+this.robots.get(rid).dest);
-						if(this.robots.get(rid).src!=-1)
-//					this.robots.get(rid).finish_time=this.robots.get(rid).finish_time-this.grph.getEdge(this.robots.get(rid).src, this.robots.get(rid).dest).getWeight();
-						this.robots.get(rid).src=src;
-						this.robots.get(rid).dest=dest;
+
+//						this.robots.get(rid).finish_time=this.robots.get(rid).finish_time-this.grph.getEdge(this.robots.get(rid).src, this.robots.get(rid).dest).getWeight();
+						this.robots.get(rid).src=dest;
 					}
 				} 
 				catch (JSONException e) {e.printStackTrace();}
 			}
-			if(game.timeToEnd()>1000)
-				log=game.move();
-
-			try {
-//				if(time_to_move<(long)Double.MAX_VALUE)
-//				Thread.sleep(time_to_move);//0=110
-					Thread.sleep(125);
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
 		}
 	}
 
+	/**
+	 * 
+	 * @param b the fruit is need to take 
+	 * the func find the robot that will reach this fruit fastest and add to this targets the routh to this fruit
+	 * 
+	 */
+	private void findRobotAndAddMission(Fruit b) {
+		// TODO Auto-generated method stub
+		double time = 0;
+		double min_time=Double.MAX_VALUE;
+		double finish_time;
+		int robot_id=-1;
+		Collection<Robot> r = robots.values();
+		Iterator<Robot> r_iter = r.iterator();
+		Robot a = null;
+		while(r_iter.hasNext()) {       
+			a=r_iter.next();
+			finish_time= a.finish_time;
+			int src= a.finish_node;
+			time=algo.shortestPathDist(src, b.on_edge.getSrc());//+finish_time
+			if(time<min_time) {
+				robot_id=a.id;
+				min_time=time;
+			}
+		}
+		if(robot_id!=-1) {
+			System.out.println("huh"+robot_id);
+			List<node_data> routh= algo.shortestPath(this.robots.get(robot_id).finish_node,  b.on_edge.getSrc());
+			routh.add(this.grph.getNode( b.on_edge.getDest()));
+			routh.remove(0);
+			this.robots.get(robot_id).targets.addAll(routh);
+			this.robots.get(robot_id).finish_node=b.on_edge.getDest();
+			this.robots.get(robot_id).finish_time=time;
+
+		}
+
+
+	}
 
 	/**
 	 * build graph algo to do do algorithm on the graph of this level
@@ -179,15 +167,14 @@ public class AutoGame {
 	 */
 	void init(){
 		this.algo = new Graph_Algo(this.grph);
-		initFruits();
 		try {
 			k=new KML_Logger();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			System.out.println("can't create kml");
 		}
 		k.createGraph(grph);
+		initFruits();
 		this.num_of_robots= findnrobots();
 		for(int i=0;i<this.num_of_robots;i++)
 			locateRobot();
@@ -237,10 +224,11 @@ public class AutoGame {
 				if(edges!=null) {
 					for (edge_data e : edges)
 					{	
+						//						System.out.println(Math.abs(grph.getNode(e.getDest()).getLocation().distance2D(grph.getNode(e.getSrc()).getLocation())- grph.getNode(e.getDest()).getLocation().distance2D(b.pos)-b.pos.distance2D(grph.getNode(e.getDest()).getLocation())));
+
 						if(b.type==-1
 								&&e.getDest()<e.getSrc()
-								&&Math.abs(grph.getNode(e.getDest()).getLocation().distance2D(grph.getNode(e.getSrc()).getLocation())- 
-										(grph.getNode(e.getDest()).getLocation().distance2D(b.pos)+b.pos.distance2D(grph.getNode(e.getSrc()).getLocation())))<0.000001) {
+								&&Math.abs(grph.getNode(e.getDest()).getLocation().distance2D(grph.getNode(e.getSrc()).getLocation())- (grph.getNode(e.getDest()).getLocation().distance2D(b.pos)+b.pos.distance2D(grph.getNode(e.getSrc()).getLocation())))<0.001) {
 							b.on_edge=e;
 
 						}
@@ -298,154 +286,105 @@ public class AutoGame {
 	private void locateRobot() {
 		// TODO Auto-generated method stub
 		Fruit a= findMaxFreeFruit();
-		JFrame in1 = new JFrame();
-		String level;
-		while(true) {
-		 level = JOptionPane.showInputDialog(in1,"enter vertex for next robot");
-		try {
-		game.addRobot(Integer.parseInt(level));
-		break;
-		}
-		catch(Exception e) {
-			JOptionPane.showMessageDialog(in1, "please choose vaild vertex");
-		}
-		}
+		game.addRobot(a.on_edge.getSrc());
 		a.staffed=true;
-		this.robots.put(id_maker, new Robot(id_maker++, Integer.parseInt(level),0,0));
-//		this.robots.get(id_maker++).targets.add(this.grph.getNode(a.on_edge.getDest()));
+		this.robots.put(id_maker, new Robot(id_maker, a.on_edge.getSrc(), a.on_edge.getDest(),a.on_edge.getWeight()));
+		//		this.robots.get(id_maker).targets.add(this.grph.getNode(a.on_edge.getSrc()));
+
+		this.robots.get(id_maker++).targets.add(this.grph.getNode(a.on_edge.getDest()));
+		//		game.chooseNextEdge(id_maker++,a.on_edge.getDest() );
 	}
 
 	/**
 	 * this thread using for auto play set dest to robots , find new fruits and add a mission for the first free robot
 	 */
-	Runnable findFruits = new Runnable() {
-		@Override
-		public void run() { 
-			while(true) {
-				if(game.timeToEnd()<1000)
-					break;
-			Iterator<String> f_iter = game.getFruits().iterator();
-			Point3D po=null;
-			JSONObject line;
-			int type=0;
-			double value=0;
-			while(f_iter.hasNext()) {
-				try {
-					String fruit=f_iter.next().toString();
-					line = new JSONObject(fruit);
-					JSONObject ttt = line.getJSONObject("Fruit");
-					String rs = ttt.getString("pos");
-					po = new Point3D(rs);//------------------------------------------------------------------------------------------------
-					Set<Point3D> pp= fruits.keySet();                       // checking if this fruit already in my data 
-					Iterator<Point3D> point= pp.iterator();
-					boolean exsit=false;
-					while(point.hasNext()) {
-						Point3D check= point.next();
-						if(check.equals(po)&&fruits.get(check).on_edge.getSrc()!=-1) exsit=true;
-					}//------------------------------------------------------------------------------------------------------------------------
-					if(!exsit) {                              
-						type= ttt.getInt("type");
-						value=ttt.getDouble("value");
-						Fruit b = new Fruit(po, value, type);
-						setEdge(b);
-
-						boolean need_to_take=true;
-					
-						if(need_to_take) { // for the event that create new fruit on the edge that robot already there
-							List<String> log = game.getRobots();
-							for(int i=0;i<log.size();i++) {
-								String robot_json = log.get(i);
-								try {
-									JSONObject line1 = new JSONObject(robot_json);
-									JSONObject ttt1 = line1.getJSONObject("Robot");
-									int dest = ttt1.getInt("dest");
-									int src = ttt1.getInt("src");
-									if(b.on_edge.getSrc()==src&&b.on_edge.getDest()==dest)
-										need_to_take=false;
-
-								}
-
-								catch (JSONException e) {e.printStackTrace();}
-				}
-						}
-						if(need_to_take)	fruits.put(po, b);
-					}
-				}
-				catch (JSONException e) {e.printStackTrace();}}
-}}
-	};
 	Runnable play = new Runnable() {
-
 
 		@Override
 		public void run() { 
 			synchronized(game) {
-//new Thread(findFruits).start();
+
 				List<String> log=game.move();
 				while(log!=null){
+
+
+
+					SetDestRobots();
+
 					Iterator<String> f_iter = game.getFruits().iterator();
 					Point3D po=null;
 					JSONObject line;
 					int type=0;
 					double value=0;
+					try {
+						Thread.sleep(110);//0=110
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					if(game.timeToEnd()>1000)
+						log=game.move();
+					else
+						break;
 					while(f_iter.hasNext()) {
 						try {
 							String fruit=f_iter.next().toString();
 							line = new JSONObject(fruit);
 							JSONObject ttt = line.getJSONObject("Fruit");
 							String rs = ttt.getString("pos");
+							po = new Point3D(rs);
 							type= ttt.getInt("type");
 							value=ttt.getDouble("value");
-							po = new Point3D(rs);
-							if(countForKml==0) {//this for the kml that draw the game something like every half second. 
-	
-									k.saveFruit(po, type);
-							}
+							if(countForKml==0) {                   // kml save fruits
+								
+								k.saveFruit(po, type);
+						}
 
-							
-							//------------------------------------------------------------------------------------------------
-							Set<Point3D> pp= fruits.keySet();                       // checking if this fruit already in my data 
+							Set<Point3D> pp= fruits.keySet();
 							Iterator<Point3D> point= pp.iterator();
 							boolean exsit=false;
 							while(point.hasNext()) {
 								Point3D check= point.next();
 								if(check.equals(po)&&fruits.get(check).on_edge.getSrc()!=-1) exsit=true;
-							}//------------------------------------------------------------------------------------------------------------------------
-							if(!exsit) {                              
-;
+							}
+							if(!exsit) {
+
 								Fruit b = new Fruit(po, value, type);
 								setEdge(b);
-
+								Collection <Fruit> f = fruits.values();
+								Iterator<Fruit> r_iter = f.iterator();
+								Fruit a = null;
 								boolean need_to_take=true;
-							
+								while(r_iter.hasNext()) {      // check if there is another fruit on this way
+									a=r_iter.next();
+									if(a.on_edge.equals(b.on_edge)) {// need to put out from fruit coolection fruits that eaten
+										need_to_take=false;
+										break;
+									}
+								}
 								if(need_to_take) { // for the event that create new fruit on the edge that robot already there
-									List<String> log1 = game.getRobots();
-									for(int i=0;i<log1.size();i++) {
-										String robot_json = log1.get(i);
+									log=game.getRobots();
+									for(int i=0;i<log.size();i++) {
+										String robot_json = log.get(i);
 										try {
 											JSONObject line1 = new JSONObject(robot_json);
 											JSONObject ttt1 = line1.getJSONObject("Robot");
 											int dest = ttt1.getInt("dest");
 											int src = ttt1.getInt("src");
-
-		
 											if(b.on_edge.getSrc()==src&&b.on_edge.getDest()==dest)
 												need_to_take=false;
-
-										}
-
+										} 
 										catch (JSONException e) {e.printStackTrace();}
 						}
 								}
 								if(need_to_take)	fruits.put(po, b);
 							}
+							// the list of fruits should be considered in your solutio
 						}
 						catch (JSONException e) {e.printStackTrace();}}
-					
-					
-					if(game.timeToEnd()<1000)
-						break;
-					SetDestRobots();
+
+
+
 				}
 
 			}
@@ -458,14 +397,10 @@ public class AutoGame {
 				level = ttt.getInt("game_level");
 			}
 			catch (JSONException e) {e.printStackTrace();}
-			k.save("kmlfor"+level);	
-			
-		}
+			k.save("kmlfor"+level);	}
 	};
 
 }
-
-
 
 
 

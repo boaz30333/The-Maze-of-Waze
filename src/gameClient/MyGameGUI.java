@@ -22,7 +22,7 @@ import java.util.LinkedList;
 import java.util.List; 
 import java.awt.BasicStroke;
 import java.awt.Color;
-
+import java.awt.Component;
 
 import utils.Point3D;
 
@@ -37,7 +37,9 @@ import org.json.JSONObject;
 import Server.Game_Server;
 import Server.game_service;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
 
@@ -75,9 +77,13 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 	private int move_to;
 	BufferedImage bufferedImage;// for graph paint
 	Graphics2D b;
-	private long time;
+	private long time= System.currentTimeMillis();
 	private boolean is_choosen_level;
 	AutoGame auto; 
+	AutoGame2 auto2;
+	String mode;
+	boolean login=false;
+	private int numlevel;
 
 
 	/**
@@ -86,11 +92,12 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 	public MyGameGUI()
 	{
 		this.grph = null;
+		//		Game_Server.login(206316911);
 		init();
 	}
-/**
- * this method create the basic windows of this gui graphic
- */
+	/**
+	 * this method create the basic windows of this gui graphic
+	 */
 	public void init()
 	{
 		bufferedImage = new BufferedImage(2000, 1000, BufferedImage.TYPE_INT_ARGB);
@@ -132,13 +139,17 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 		start.addActionListener(this);
 		MenuItem stop = new MenuItem("stop game");
 		stop.addActionListener(this);
+		MenuItem login= new MenuItem("log in");
+		login.addActionListener(this);
 		menu.add(saveing);
 		menu.add(loading);
+		option.add(login);
 		option.add(chooseLevel);
 		option.add(choosemode);
 		option.add(start);
 		option.add(stop);
 		this.addMouseListener(this);
+
 
 		if(this.grph!=null) {
 			get_scale_of_level(this.grph);
@@ -146,11 +157,11 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 		}
 
 	}
-/**
- * 
- * @param grph2 the graph that this windows should paint
- * set the scale of the points
- */
+	/**
+	 * 
+	 * @param grph2 the graph that this windows should paint
+	 * set the scale of the points
+	 */
 	public  void get_scale_of_level(graph grph2) {
 		// TODO Auto-generated method stub
 		Collection<node_data> b= grph2.getV()	;
@@ -166,10 +177,10 @@ public class MyGameGUI extends JFrame implements ActionListener ,Serializable, G
 		}
 	}
 	@Override
-/**
- * this method listen to the menu  	
- */
-public void actionPerformed(ActionEvent Command)
+	/**
+	 * this method listen to the menu  	
+	 */
+	public void actionPerformed(ActionEvent Command)
 	{
 		String str = Command.getActionCommand();		
 		switch(str) 
@@ -206,21 +217,49 @@ public void actionPerformed(ActionEvent Command)
 				System.out.println("Load from file: " + fileToLoad.getAbsolutePath());
 			}
 			break;
+		case "log in":
+			login();
+			break;
 		case "choose level":
-			JFrame in = new JFrame();
 			try 
 			{
-				JFrame in1 = new JFrame();
-				String level = JOptionPane.showInputDialog(in,"enter level 0-23 ");
-				int numlevel=-1;
+				if(game!=null&&game.isRunning()) {
+
+					game.stopGame();
+				}
+				JFrame frame = new JFrame("Select level");
+				JFrame in11 = new JFrame();
+				String level1;
+				if(login==false) {
+				final String[] modes = { "0","1","3","5","9","11","13","16","19","20","23"};
+				
+				 level1 = (String) JOptionPane.showInputDialog(frame, 
+						"select level",
+						"level",
+						JOptionPane.QUESTION_MESSAGE, 
+						null, 
+						modes, 
+						modes[0]);
+				}
+				else {
+				final String[] modes = { "0","1", "2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23"};
+				
+				level1 = (String) JOptionPane.showInputDialog(frame, 
+						"select level",
+						"level",
+						JOptionPane.QUESTION_MESSAGE, 
+						null, 
+						modes, 
+						modes[0]);
+				}
 				try {
-					numlevel =Integer.parseInt(level);
+					numlevel =Integer.parseInt(level1);
 				}
 				catch(Exception e) {
 
 				}
 				if(numlevel>23|| numlevel<0) {
-					JOptionPane.showMessageDialog(in1, "please choose level 0-23! , you entered:+"+numlevel);
+					JOptionPane.showMessageDialog(in11, "please choose level 0-23! , you entered:+"+numlevel);
 					break;
 				}
 				chooselevel(numlevel);
@@ -232,9 +271,9 @@ public void actionPerformed(ActionEvent Command)
 			break;
 		case "select mode": //manual = put the robots in vertex ,  auto= put robots auto
 			JFrame frame = new JFrame("Select mode");
-			JFrame in1 = new JFrame();
-			final String[] modes = { "Automatic", "Manual"};
-			String mode = (String) JOptionPane.showInputDialog(frame, 
+			JFrame in11 = new JFrame();
+			final String[] modes = { "Automatic","Automatic2", "Manual"};
+			mode = (String) JOptionPane.showInputDialog(frame, 
 					"How you wanna play?",
 					"Mode",
 					JOptionPane.QUESTION_MESSAGE, 
@@ -242,20 +281,24 @@ public void actionPerformed(ActionEvent Command)
 					modes, 
 					modes[0]);
 			if(mode==null) {
-				JOptionPane.showMessageDialog(in1, "please choose a mode before starting the game");
+				JOptionPane.showMessageDialog(in11, "please choose a mode before starting the game");
+			}
+			else if(game!=null&&game.isRunning()) {
+				JOptionPane.showMessageDialog(in11, "please stop the game");
+				break;
 			}
 			else
 				selectMode(mode);
 
 			break;
 		case "start game": 
-			JFrame in11 = new JFrame();
+			JFrame in111 = new JFrame();
 			if(this.game==null||this.game.timeToEnd()==0) {
-				JOptionPane.showMessageDialog(in11, "please choose level first");
+				JOptionPane.showMessageDialog(in111, "please choose level first");
 				break;
 			}
 			if(this.rest_to_locate>0) {
-				JOptionPane.showMessageDialog(in11, "please locate more "+this.rest_to_locate+"robots");
+				JOptionPane.showMessageDialog(in111, "please locate more "+this.rest_to_locate+"robots");
 				break;
 			}
 			this.game.startGame();// if is manual set  listen to mouse and wait for pressin to vetex move any exist robot to this vertex if auto play auto
@@ -266,7 +309,6 @@ public void actionPerformed(ActionEvent Command)
 			b.setPriority(Thread.MAX_PRIORITY);
 
 
-
 			break;
 		case "stop game":
 			this.game.stopGame();
@@ -275,12 +317,36 @@ public void actionPerformed(ActionEvent Command)
 
 		}
 	}
+	private void login() {
+
+			JFrame in11=new JFrame();
+			String userID = JOptionPane.showInputDialog(in11,"enter your userID");
+			int id=-1;
+			try {
+				id =Integer.parseInt(userID);
+			}
+			catch(Exception e) {
+				JOptionPane.showMessageDialog(in11, "please insert again your id");
+			}
+		boolean sucsses=Game_Server.login(id);
+		if(!sucsses)
+			JOptionPane.showMessageDialog(in11, "login failed! try again!");
+		else {
+			login=true;
+			JOptionPane.showMessageDialog(in11, "login Successfully");// 
+			System.out.println(login);
+		}
+
+		
+		
+	}
 	/**
 	 * 
 	 * @param numlevel the level of the game between 0-23 
 	 * we need to ask this graph from the server and than called to other func to paint it
 	 */
 	public void chooselevel(int numlevel) {
+
 		this.game= Game_Server.getServer(numlevel);
 		String g = game.getGraph();
 		this.grph = new DGraph();
@@ -326,7 +392,10 @@ public void actionPerformed(ActionEvent Command)
 		else { // starting auto game
 			this.man=false;
 			try {
-				auto= new AutoGame(this.game,this.grph);
+				if(mode=="Automatic")
+					auto= new AutoGame(this.game,this.grph);
+				else
+					auto2= new AutoGame2(this.game,this.grph);
 				repaint();
 				this.rest_to_locate=0;
 			} catch (Exception e) {
@@ -421,35 +490,42 @@ public void actionPerformed(ActionEvent Command)
 		}
 	}
 
-/**
- * paint the clock of this level 
- */
-	private void printClock() {
+	/**
+	 * paint the clock of this level 
+	 * @return 
+	 */
+	private boolean printClock(long time_to_end) {
 		Graphics2D windows= (Graphics2D) this.b;
 		String sss="";
-		if(game.isRunning()&&time -game.timeToEnd()>=1000) {
-			System.out.println("time"+time/1000+"  to end :"+game.timeToEnd()/1000);
+		long b= System.currentTimeMillis();
+		//		boolean live= true;
+		if(b-time>=1000) {
+			//			System.out.println("time"+time/1000+"  to end :"+game.timeToEnd()/1000);
 			windows.setColor(Color.MAGENTA);				
-			windows.fillRect(90, 90,100, 30);
+			windows.fillRect(0, 700,2000, 1000);
 			windows.setStroke(new BasicStroke(20,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
-			windows.setColor(Color.green);
-			sss = ""+game.timeToEnd()/1000+ " sec to end";
-			time=game.timeToEnd();
+
+			sss = ""+time_to_end/1000+ " sec to end \n result:"+this.game.toString();
+
+
+			time=b;
 		}
-		windows.drawString(sss,100,100);
+		windows.setColor(Color.green);
+		windows.drawString(sss,80,710);
+		return (time_to_end>500);
 
 	}
-/**
- * 
- * this method paint the fruits of this level
- */
-private void paintfruits(Graphics d) {
+	/**
+	 * 
+	 * this method paint the fruits of this level
+	 */
+	private void paintfruits(Graphics d) {
 		// TODO Auto-generated method stub
 		Graphics2D windows = (Graphics2D) d;
 		Point3D po=null;
 		JSONObject line;
 		int type=0;
-		Iterator<String> f_iter = game.getFruits().iterator();
+		Iterator<String> f_iter = this.game.getFruits().iterator();
 		while(f_iter.hasNext()) {
 			try {
 				line = new JSONObject(f_iter.next());
@@ -457,7 +533,6 @@ private void paintfruits(Graphics d) {
 				String rs = ttt.getString("pos");
 				type= ttt.getInt("type");
 				po = new Point3D(rs);
-				// the list of fruits should be considered in your solutio
 			}
 			catch (JSONException e) {e.printStackTrace();}
 			// TODO Auto-generated method stub
@@ -519,11 +594,11 @@ private void paintfruits(Graphics d) {
 
 
 	}
-/**
- * 
- * @param p get point of the mouse click 
- * @return the key of the vertex that clicked
- */
+	/**
+	 * 
+	 * @param p get point of the mouse click 
+	 * @return the key of the vertex that clicked
+	 */
 	private int find_node_move_to(Point3D p) {
 		// TODO Auto-generated method stub
 		Collection <node_data> node = grph.getV();
@@ -549,7 +624,7 @@ private void paintfruits(Graphics d) {
 	 */
 	private int find_robot_is_choosen(Point3D p) {
 		// TODO Auto-generated method stub
-		Iterator<String> f_iter = game.getRobots().iterator();
+		Iterator<String> f_iter = this.game.getRobots().iterator();
 		while(f_iter.hasNext()) {
 			try {
 				JSONObject line = new JSONObject(f_iter.next());
@@ -578,7 +653,7 @@ private void paintfruits(Graphics d) {
 	 * @param clicked get point of the mouse click 
 	 * @return true if sucsses to locate robot. false if not
 	 */
-private boolean checkAndLocateRobot(Point3D clicked) {
+	private boolean checkAndLocateRobot(Point3D clicked) {
 		Collection <node_data> node = grph.getV();
 		for (node_data node_data : node)
 		{
@@ -607,9 +682,9 @@ private boolean checkAndLocateRobot(Point3D clicked) {
 	public void mouseExited(MouseEvent e) {
 		if(this.man==false) return;
 	}
-/**
- * this Thread called only in mannual mode and called to move robot on the server
- */
+	/**
+	 * this Thread called only in mannual mode and called to move robot on the server
+	 */
 	Runnable moveRobots = new Runnable(){   
 
 		public void run() {  
@@ -617,7 +692,7 @@ private boolean checkAndLocateRobot(Point3D clicked) {
 			while(game!=null&&game.isRunning()){
 				{
 					try {
-						Thread.sleep(100);
+						Thread.sleep(85);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -641,9 +716,13 @@ private boolean checkAndLocateRobot(Point3D clicked) {
 
 		@Override
 		public void run() { 
-
-			if(man==false)
-				new Thread(auto.play).start();
+			boolean b= true;
+			if(man==false) {
+				if(mode=="Automatic")
+					new Thread(auto.play).start();
+				else
+					new Thread(auto2.play).start();	
+			}
 			while(game!=null){
 				if(man==true) game.move();
 				try {
@@ -652,13 +731,33 @@ private boolean checkAndLocateRobot(Point3D clicked) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-					repaint();
-				printClock();
-				if(!game.isRunning()) break;
+				repaint();
+				b=printClock(game.timeToEnd());
+				if(!b)
+					break;
+
+			}
+			if(login==true) {
+			JFrame frame = new JFrame("Send kml");
+			final String[] modes = { "yes","no"};
+			String check = (String) JOptionPane.showInputDialog(frame, 
+					"you want to send kml?",
+					"option",
+					JOptionPane.QUESTION_MESSAGE, 
+					null, 
+					modes, 
+					modes[0]);
+			if(check=="yes") {
+				game.sendKML(KML_Logger.getKML(numlevel));
+
+
+			}
+			login=false;
+			numlevel=-1;
 			}
 			System.out.println("Game Over: "+game.toString());
 			is_choosen_level=false;
-
+			
 		}
 	};
 	@Override
@@ -683,5 +782,6 @@ private boolean checkAndLocateRobot(Point3D clicked) {
 		return this.grph;
 	}
 
-}
+	}
+
 

@@ -45,9 +45,9 @@ public class Point3D implements Serializable
     public Point3D(String s) {
         try {
             String[] a = s.split(",");
-            _x = Double.parseDouble(a[0])*50;
-            _y = Double.parseDouble(a[1])*50;
-            _z = Double.parseDouble(a[2])*50;
+            _x = Double.parseDouble(a[0]);
+            _y = Double.parseDouble(a[1]);
+            _z = Double.parseDouble(a[2]);
         }
         catch(IllegalArgumentException e) {
             System.err.println("ERR: got wrong format string for POint3D init, got:"+s+"  should be of format: x,y,x");
