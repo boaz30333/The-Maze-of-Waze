@@ -69,7 +69,7 @@ public class KML_Logger {
 			newVertex(n.getLocation().x(),n.getLocation().y(), n.getKey());
 			Placemark p= doc.createAndAddPlacemark();
 			p.setName("route from-"+n.getKey());
-			p.createAndAddStyle().createAndSetLineStyle().withColor("ffffff").setWidth(4);
+			p.createAndAddStyle().createAndSetLineStyle().withColor("0033ff").setWidth(4);
 			LineString line =p.createAndSetLineString();
 			line.withTessellate(true);
 			Collection<edge_data> edges =g.getE(n.getKey());
